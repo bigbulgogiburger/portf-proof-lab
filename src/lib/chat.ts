@@ -41,6 +41,7 @@ export function toPlainText(text: string): string {
   return text
     .replace(/\*\*(.+?)\*\*/g, "$1")
     .replace(/__(.+?)__/g, "$1")
+    .replace(/~~(.+?)~~/g, "$1")
     .replace(/`([^`\n]+)`/g, "$1")
     .replace(/^#{1,6}\s+/gm, "")
     .trim();
