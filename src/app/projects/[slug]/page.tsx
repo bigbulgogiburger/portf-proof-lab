@@ -51,7 +51,7 @@ export default async function ProjectPage({
             <p>{p.role}</p>
           </div>
           <div>
-            <span>활용 기술</span>
+            <span>기술 스택</span>
             <div className="tag-list">
               {p.tags.map((t) => (
                 <span key={t}>{t}</span>
