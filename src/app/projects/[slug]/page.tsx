@@ -47,7 +47,7 @@ export default async function ProjectPage({
         <p className="case-intro">{p.summary}</p>
         <div className="case-meta">
           <div>
-            <span>담당 역할</span>
+            <span>역할</span>
             <p>{p.role}</p>
           </div>
           <div>
