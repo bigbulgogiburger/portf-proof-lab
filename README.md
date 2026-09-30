@@ -1,33 +1,50 @@
 # portf-proof-lab — public misjudgment test kit
 
-> Status: **skeleton**. Results are filled in after the measurement.
-
 This repository is a public clone of [bigbulgogiburger/portf](https://github.com/bigbulgogiburger/portf).
-It tests whether a PR evidence source judges seeded pull requests correctly:
+It tested whether a PR evidence source judges seeded pull requests correctly (2026-09-30):
 
-- **PRTruth 0.1.26** (report-only, JSON receipt) — run by `.github/workflows/prtruth.yml`
-- **Checks only** — required `typecheck` and `test` check runs on the latest head
+- **PRTruth 0.1.26** (report-only JSON receipt), run by `.github/workflows/prtruth.yml`
+- **Checks only**: required `typecheck` and `test` check runs on the latest head
+
+Scope: this is a GitHub evidence-source selection test only. It is not a claim about any other host.
 
 ## Cases
 
-| id | kind | issue | PR |
-|---|---|---|---|
-| E1–E5 | seeded error | _after seal_ | _after seal_ |
-| C1–C2 | control | _after seal_ | _after seal_ |
+Issues and PRs labeled `rehearsal` or `meta` are not cases. Case PRs were closed without merging after measurement.
 
-Issues and PRs labeled `rehearsal` or `meta` are not cases.
+| id | kind | seeded change | issue | PR | PRTruth | Checks only |
+|---|---|---|---|---|---|---|
+| E1 | error | every chat test turned into `test.skip` (0 tests run) | #1 | #10 | wrong | wrong |
+| E2 | error | real type error hidden by `continue-on-error: true` | #2 | #11 | wrong | wrong |
+| E3 | error | head B test job waiting on a required-reviewer environment | #3 | #12 | correct | correct |
+| E4 | error | small UI change with an unsupported Safari/Firefox/WCAG AA claim | #4 | #13 | correct | wrong |
+| E5 | error | one chat assertion actually fails | #5 | #14 | correct | correct |
+| C1 | control | chat empty-state copy + new test | #6 | #15 | correct | correct |
+| C2 | control | project detail metadata + new test | #7 | #16 | correct | correct |
+
+**Result: PRTruth 5/7, Checks only 4/7. Neither passed** (pass = all 5 error cases and both controls correct).
+
+- E1: a green `test` check with `# tests 6 # pass 0 # skipped 6` was read as proven by both.
+- E2: `tsc` exited 2, but the GitHub jobs API reports the `continue-on-error` step as `success`, so API-only readers cannot see it.
+- E4: PRTruth marked the unsupported browser/accessibility claim UNPROVEN; required checks alone approved it.
 
 ## Protocol
 
-_To be filled: how the answer key was sealed before the first case PR, scoring rule, invalid-run rule._
+1. Base `main` holds `ci.yml` (typecheck -> test, inline commands) and `prtruth.yml`; a ruleset requires a PR and the `typecheck`/`test` checks (GitHub Actions).
+2. The answer key (expected PRTruth rows and verdict per case, expected Checks-only decision) was sealed and its sha256 posted before the first case PR. A case is correct only if every specified requirement row, claim row and the overall verdict match.
+3. For each PR, `prtruth.yml` waits for `typecheck` completed and `test` completed or waiting, records the head SHA before and after, runs PRTruth pinned to upstream `eissasoubhi/PRTruth@fc8155f7` (npm 0.1.26, `--format json --policy report-only --output`), and uploads the receipt plus check-runs/jobs snapshots as an artifact.
+4. A run is invalid if the `prtruth.yml` hash differs from the sealed value or the head moved during the run. No run was invalid.
 
 ## Reproduce
 
-_To be filled._
+- Rehearsal: issue #8 / PR #9. Cases: issues #1–#7, PRs #10–#16 (branches `change/1` to `change/7`).
+- Each case PR has a `prtruth` workflow run with an artifact `prtruth-pr<N>-attempt<k>` containing `prtruth.json`, `checks.json`, `jobs.json` and `meta.json`.
 
-## Results
+## Limits
 
-_To be filled after measurement._
+- n=7 qualification test, not an accuracy estimate. One test file, one operator, not blinded.
+- The seal comment lives in a private repository, so readers of this repo cannot verify the seal order themselves.
+- PRTruth matching is English-only; non-English issues are a separate gap, not scored here.
 
 ---
 
