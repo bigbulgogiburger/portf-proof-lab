@@ -1,0 +1,118 @@
+name: prtruth
+
+# PRTruth 0.1.26 (eissasoubhi/PRTruth@fc8155f7, npm gitHead 동일)을 report-only 로 돌려
+# JSON 영수증과 같은 시점의 check-runs·jobs 스냅숏을 artifact 로 남긴다.
+# 공식 Action 은 --output 을 넘기지 않아 JSON 을 파일로 받을 수 없으므로,
+# 고정 커밋의 action.yml 실행 줄을 그대로 따르고 --output 만 더한다.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: read
+  checks: read
+  actions: read
+  statuses: read
+
+jobs:
+  prtruth:
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'meta') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      PR: ${{ github.event.pull_request.number }}
+      EVENT_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: checkout pinned prtruth
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: eissasoubhi/PRTruth
+          ref: fc8155f732f015f981bb1f0c48df89405929a96d
+          path: .prtruth-src
+          persist-credentials: false
+          sparse-checkout: |
+            package.json
+            action.yml
+          sparse-checkout-cone-mode: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.12.0
+          package-manager-cache: false
+
+      - name: wait-ci
+        run: |
+          for i in $(seq 1 80); do
+            s=$(gh api "repos/$REPO/commits/$EVENT_HEAD/check-runs?per_page=100" \
+              --jq '[.check_runs[] | select(.name=="typecheck" or .name=="test") | .name+"="+.status] | sort | join(",")')
+            echo "[$i] $s"
+            case ",$s," in
+              *",typecheck=completed,"*) case ",$s," in *",test=completed,"*|*",test=waiting,"*) exit 0;; esac;;
+            esac
+            sleep 15
+          done
+          echo "wait-ci timeout (20m)"; exit 1
+
+      - name: head-before
+        run: echo "HEAD_BEFORE=$(gh api repos/$REPO/pulls/$PR --jq .head.sha)" >> "$GITHUB_ENV"
+
+      - name: prtruth
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          NPM_CONFIG_USERCONFIG: /dev/null
+          NPM_CONFIG_REGISTRY: https://registry.npmjs.org
+          NPM_CONFIG_IGNORE_SCRIPTS: "true"
+          NPM_CONFIG_AUDIT: "false"
+          NPM_CONFIG_FUND: "false"
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/out"
+          PRTRUTH_VERSION="$(node -p "require('./.prtruth-src/package.json').version")"
+          echo "PRTRUTH_VERSION=$PRTRUTH_VERSION" >> "$GITHUB_ENV"
+          TEMP_DIR="$(mktemp -d)"
+          set +e
+          (
+            cd "$TEMP_DIR"
+            npx -y "prtruth@${PRTRUTH_VERSION}" verify --repo "$REPO" --pr "$PR" \
+              --format json --policy report-only --github-summary \
+              --output "$GITHUB_WORKSPACE/out/prtruth.json"
+          ) 2> "$GITHUB_WORKSPACE/out/prtruth.stderr"
+          echo "PRTRUTH_EXIT=$?" >> "$GITHUB_ENV"
+          rm -rf "$TEMP_DIR"
+
+      - name: head-after-and-snapshots
+        run: |
+          HEAD_AFTER=$(gh api repos/$REPO/pulls/$PR --jq .head.sha)
+          gh api "repos/$REPO/commits/$HEAD_BEFORE/check-runs?per_page=100" > out/checks.json
+          gh api "repos/$REPO/actions/runs?head_sha=$HEAD_BEFORE&per_page=100" > out/runs.json
+          for id in $(jq '.workflow_runs[].id' out/runs.json); do
+            gh api "repos/$REPO/actions/runs/$id/jobs?per_page=100"
+          done | jq -s '.' > out/jobs.json
+          jq -n \
+            --arg repo "$REPO" --argjson pr "$PR" \
+            --arg event_head_sha "$EVENT_HEAD" --arg head_sha_before "$HEAD_BEFORE" --arg head_sha_after "$HEAD_AFTER" \
+            --arg prtruth_workflow_sha256 "$(sha256sum .github/workflows/prtruth.yml | cut -d' ' -f1)" \
+            --arg ci_workflow_sha256 "$(sha256sum .github/workflows/ci.yml | cut -d' ' -f1)" \
+            --arg prtruth_version "$PRTRUTH_VERSION" \
+            --arg prtruth_source_sha "$(git -C .prtruth-src rev-parse HEAD)" \
+            --argjson prtruth_exit "$PRTRUTH_EXIT" \
+            --arg permissions_declared "$(sed -n '/^permissions:/,/^[a-z]/p' .github/workflows/prtruth.yml | sed '$d')" \
+            --arg run_id "$GITHUB_RUN_ID" --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg captured_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '$ARGS.named' > out/meta.json
+          cat out/meta.json
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: prtruth-pr${{ github.event.pull_request.number }}-attempt${{ github.run_attempt }}
+          path: out/
+          if-no-files-found: error

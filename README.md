@@ -1,3 +1,38 @@
+# portf-proof-lab — public misjudgment test kit
+
+> Status: **skeleton**. Results are filled in after the measurement.
+
+This repository is a public clone of [bigbulgogiburger/portf](https://github.com/bigbulgogiburger/portf).
+It tests whether a PR evidence source judges seeded pull requests correctly:
+
+- **PRTruth 0.1.26** (report-only, JSON receipt) — run by `.github/workflows/prtruth.yml`
+- **Checks only** — required `typecheck` and `test` check runs on the latest head
+
+## Cases
+
+| id | kind | issue | PR |
+|---|---|---|---|
+| E1–E5 | seeded error | _after seal_ | _after seal_ |
+| C1–C2 | control | _after seal_ | _after seal_ |
+
+Issues and PRs labeled `rehearsal` or `meta` are not cases.
+
+## Protocol
+
+_To be filled: how the answer key was sealed before the first case PR, scoring rule, invalid-run rule._
+
+## Reproduce
+
+_To be filled._
+
+## Results
+
+_To be filled after measurement._
+
+---
+
+<details><summary>Original project README (portf)</summary>
+
 # 편도훈 · Portfolio
 
 Next.js App Router, React, TypeScript 기반의 한국어 포트폴리오입니다. Vercel에 배포하며 데이터베이스를 사용하지 않습니다.
@@ -74,3 +109,5 @@ npm run build
 4. AI 실제 응답·근거 링크·요청 제한을 배포 환경에서 확인합니다.
 
 토큰은 로컬 환경이나 Vercel에서 설정합니다. 인증 정보는 문서·소스·Git에 넣지 않습니다.
+
+</details>
