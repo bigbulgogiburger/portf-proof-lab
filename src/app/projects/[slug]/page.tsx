@@ -34,7 +34,7 @@ export default async function ProjectPage({
       <Nav />
       <main id="main" className={`case-page container accent-${p.accent}`}>
         <Link href="/#work" className="text-link back-link">
-          ← 모든 프로젝트
+          ← 프로젝트 목록으로
         </Link>
         <div className="section-kicker">
           <span>

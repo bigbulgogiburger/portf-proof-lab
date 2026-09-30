@@ -233,7 +233,7 @@ export function Chat() {
           id="chat-floating"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="경력이나 프로젝트를 질문해 주세요"
+          placeholder="경력이나 프로젝트에 대해 물어보세요"
           maxLength={800}
           disabled={busy}
           autoComplete="off"
