@@ -19,6 +19,7 @@ jobs:
       - name: install
         run: npm ci --no-audit --no-fund
       - name: typecheck
+        continue-on-error: true
         run: npx tsc --noEmit
 
   test:

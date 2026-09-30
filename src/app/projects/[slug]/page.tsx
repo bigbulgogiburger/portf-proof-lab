@@ -25,6 +25,7 @@ export default async function ProjectPage({
   const { slug } = await params;
   const p = projects.find((p) => p.id === slug);
   if (!p) notFound();
+  const periodLabel: number = `${p.period} · ${p.status}`;
   const next = projects[(projects.indexOf(p) + 1) % projects.length];
   return (
     <>
@@ -40,7 +41,7 @@ export default async function ProjectPage({
           <span>
             {p.number} / {p.category}
           </span>
-          <span>{p.period} · {p.status}</span>
+          <span>{periodLabel}</span>
         </div>
         <h1>{p.title}</h1>
         <p className="case-subtitle">{p.subtitle}</p>
