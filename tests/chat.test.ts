@@ -9,6 +9,7 @@ import {
 } from "../src/lib/chat";
 import { projects, publicKnowledge } from "../src/data/portfolio";
 import { POST } from "../src/app/api/chat/route";
+import { chatWelcome } from "../src/lib/chat-copy";
 test("valid one-turn and multi-turn conversations", () => {
   assert.ok(validateMessages([{ role: "user", content: "AI 경험은?" }]));
   assert.ok(
@@ -125,4 +126,10 @@ test("strips Markdown emphasis the chat panel cannot render", () => {
     "요약\nSpring Retry와 AOP",
   );
   assert.equal(toPlainText("2 * 3 = 6"), "2 * 3 = 6");
+});
+test("chat empty state invites career and project questions", () => {
+  assert.equal(chatWelcome.greeting, "안녕하세요.");
+  assert.match(chatWelcome.prompt, /경력과 프로젝트/);
+  assert.match(chatWelcome.prompt, /물어보세요\.$/);
+  assert.match(chatWelcome.note, /공개된 포트폴리오/);
 });

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { Sparkles, X, Send, ArrowUpRight } from "./icons";
+import { chatWelcome } from "../lib/chat-copy";
 
 type Message = { role: "user" | "assistant"; content: string };
 type Source = { id: string; title: string };
@@ -163,11 +164,11 @@ export function Chat() {
         <div className="chat-welcome">
           <span className="eyebrow">PORTFOLIO Q&amp;A</span>
           <h3>
-            안녕하세요.
+            {chatWelcome.greeting}
             <br />
-            경력과 프로젝트를 질문해 주세요.
+            {chatWelcome.prompt}
           </h3>
-          <p>공개된 포트폴리오를 바탕으로 답변합니다.</p>
+          <p>{chatWelcome.note}</p>
         </div>
         {!messages.length && (
           <div className="suggested-questions">
