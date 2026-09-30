@@ -5,6 +5,7 @@ import { Nav } from "@/components/nav";
 import { ProjectVisual } from "@/components/project-visual";
 import { Chat } from "@/components/chat";
 import { ArrowRight, ArrowUpRight, Github } from "@/components/icons";
+import { projectMetaLine } from "@/lib/project-meta";
 export function generateStaticParams() {
   return projects.map((p) => ({ slug: p.id }));
 }
@@ -40,7 +41,7 @@ export default async function ProjectPage({
           <span>
             {p.number} / {p.category}
           </span>
-          <span>{p.period} · {p.status}</span>
+          <span>{projectMetaLine(p)}</span>
         </div>
         <h1>{p.title}</h1>
         <p className="case-subtitle">{p.subtitle}</p>
