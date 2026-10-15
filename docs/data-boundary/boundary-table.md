@@ -5,12 +5,12 @@
 <!-- sec:scope -->
 ## 이 표는 무엇인가
 
-- 문서 버전: v1
-- 확인일: 2026-10-01
+- 문서 버전: v2
+- 확인일: 2026-10-01(v1 의 행) · 2026-10-14(v2 에서 더한 v0.6 행·⑤절) · 2026-10-15(v2 를 고정하기 전에 고친 행: 평문 http 규칙·docker 두뇌 네트워크·ssh 전달 끄기·사용자 계정 도구)
 - 대상 버전: Claude Code 2.1.286 · Codex CLI 0.159.3 · GitHub REST API 2026-03-10 · GitLab API v4
 - 구버전 GitLab(v4 이전 API)과의 차이는 ③절의 GitLab 행에 따로 적는다.
 - 그 외 에이전트 CLI(Gemini CLI 등): 미조사. 이 표는 Claude Code 와 Codex CLI 두 가지만 자세히 본다.
-- Orbit 은 아직 만들어지지 않았다. Orbit 자신의 행은 모두 "이렇게 만들 것이다"라는 설계 약속이며, 근거 칸에 `미확인 — 구현 전 설계 의도` 로 표시한다.
+- Orbit 자신의 행 중 아직 만들지 않은 것은 "이렇게 만들 것이다"라는 설계 약속이며, 근거 칸에 `미확인 — 구현 전 설계 의도` 로 표시한다. v0.6 으로 만든 것(행 이름에 `v0.6`)은 시험으로 확인한 동작이라 `실측` 으로 표시한다.
 
 ### 근거 칸 읽는 법
 
@@ -36,6 +36,13 @@ Orbit 의 기본 흐름은 호스트·외부 네트워크 없이 한 대의 PC �
 | 결정·검사 기록 | 같은 PC 의 OS 사용자. 같은 사용자 권한으로 도는 다른 프로세스까지 막는다고 주장하지 않는다 | 사람 결정(접수와 적용을 따로), 검사 명령·도구 버전·종료 코드·보고 해시·테스트 수, AI 리뷰 제안 | PC 에만 남는다. JSON 으로 내보내기·가져오기를 할 수 있다. 보관 기간은 아직 정하지 않았다 | 아직 정하지 않았다(암호화 여부와 키 위치는 설계 미정) | 미확인 — 구현 전 설계 의도 |
 | 에이전트 실행 기록 | 같은 PC 의 OS 사용자 | 에이전트 CLI 의 stdout·stderr·종료 코드·시간 제한·중단 이유 | PC 에만 남는다 | 에이전트 자격 증명은 각 CLI 가 스스로 보관한다(②절). 실행 기록의 stdout·stderr 에 자격 증명이 섞이지 않게 하는 방법은 아직 정하지 않았다 | 미확인 — 구현 전 설계 의도 |
 | 원격 텔레메트리 | 아무도 — 보내지 않는다 | 없음 | 없음 | 해당 없음 | 미확인 — 구현 전 설계 의도 |
+| Orbit — 제어면 DB(`orbit.db`, v0.6) | 같은 PC 의 OS 사용자. 같은 사용자 권한으로 도는 다른 프로세스까지 막는다고 주장하지 않는다 | 조직도(사람·역할·프로젝트·담당 에이전트·목표)·일감·run 요약과 오류(알려진 비밀 값을 가린 뒤 300자)·사용량·비용 원장·승인 카드와 답·알림과 배송 결과·공수·감사 기록 | Orbit 설정 폴더(`ORBIT_HOME`)의 sqlite 파일 하나에 남는다. 감사 기록은 덧붙이기만 한다(DB 트리거가 고치기·지우기를 거절). 자동으로 지우는 기간은 아직 정하지 않았다 | 암호화하지 않는다 — OS 사용자 계정 권한. 알림 창구·트래커의 비밀은 값이 아니라 환경변수 이름만 남긴다 | 실측 (2026-10-14) |
+| Orbit — 웹 로그인 토큰·세션(v0.6) | 로그인 링크는 그것을 띄운 터미널(`orbit up`·`orbit open`) 사용자만 본다. 세션은 그 링크를 연 브라우저만 쓴다 | 로그인한 사람과 기한 | 로그인 토큰은 sha256 해시로만 DB 에 남고 10분 안에 한 번 쓰면 끝난다. 세션은 데몬 메모리에만 있고 12시간 쓰지 않으면 끝난다(데몬을 다시 띄우면 다시 로그인) | 세션 쿠키(`HttpOnly`·`SameSite=Strict`) | 실측 (2026-10-14) |
+| Orbit — 두뇌 실행 기록(v0.6) | 같은 PC 의 OS 사용자 | 두뇌(claude-code·codex·hermes·orbit) 실행의 결과 요약·오류·사용량·비용, 위임 실행의 두뇌 출력 로그 | run 요약은 `orbit.db`, 위임 로그는 저장소 안쪽 `.git/orbit` 서랍에 남는다. 두뇌 출력은 남기기 전에 이 PC 환경변수의 비밀 값을 가린다(가리기는 사고 예방이지 경계가 아니다) | 두뇌 자격 증명은 각 CLI 의 자체 저장소, Orbit 자체 두뇌는 환경변수 하나(②절). 두뇌 자식 프로세스에는 허용 목록의 환경변수만 넘긴다 | 실측 (2026-10-14) |
+| Orbit — 두뇌·AI 리뷰 에이전트에 싣지 않는 사용자 계정 도구(v0.6) | 아무도 — 싣지 않는다 | Orbit 이 띄우는 claude·codex(두뇌와 AI 리뷰 에이전트)에는 사용자 설정의 MCP 서버·플러그인·앱(메일·이슈 트래커처럼 사용자 계정으로 바깥에 닿는 도구)을 싣지 않는다. claude 는 `--restricted`·`--strict-mcp-config`, codex 는 앱·플러그인·브라우저·컴퓨터 제어 기능을 끈 뒤 켜진 MCP 서버를 하나씩 끄고 다시 읽어 확인한다 — 확인하지 못하면 실행하지 않는다. 실행 파일 이름이 claude·codex 가 아닌 리뷰 에이전트는 Orbit 이 끄는 법을 몰라 그 설정을 쓴 사람의 몫이다 | 해당 없음 — 남기는 것이 없다 | 그 도구들의 자격 증명은 각 CLI·플러그인의 자체 저장소에 그대로 있고 Orbit 은 읽지 않는다 | 실측 (2026-10-15) |
+| Orbit — 알림 기록(v0.6) | 같은 PC 의 로컬 웹·CLI 사용자. 켜 둔 바깥 창구가 있으면 ⑤절 | 알림 제목·본문(알려진 비밀 값을 가린 뒤)·심각도·이어 볼 화면 주소·창구별 배송 결과(보냄·모름·거부·실패) | `orbit.db` 에 남는다. 배송 결과가 "모름" 이면 다시 보내지 않는다 | OS 사용자 계정 권한 | 실측 (2026-10-14) |
+| Orbit — git 밖 승인 카드(v0.6) | 로컬 웹에 로그인한 사람 모두(프로젝트로 나눠 가리지 않는다)와 같은 PC 의 CLI 사용자. 답은 권한 있는 사람만 | 카드 본문·근거, 답(접수와 적용을 따로)·답한 사람·본 화면 해시·적용 결과 | `orbit.db` 에 남는다. 효력은 적용된 답만이다. 메신저로는 카드 본문을 보내지 않는다(⑤절) | OS 사용자 계정 권한 | 실측 (2026-10-14) |
+| Orbit — 프로젝트 기억(v0.6) | 같은 PC 의 OS 사용자. 그 프로젝트의 두뇌에게 맥락으로 주면 ②절의 모델 제공자도 본다 | 결정 기억·인계 문서·작업 메모 — 고객 자료가 들어갈 수 있다 | 원본은 Orbit 설정 폴더 아래 프로젝트별 `memories.jsonl`(덧붙이기만), 검색 색인은 `orbit.db`(원본에서 다시 만드는 사본). 남기기 전에 알려진 비밀 값을 가린다 | OS 사용자 계정 권한 | 실측 (2026-10-14) |
 
 <!-- sec:agent -->
 ## ② 에이전트 → 모델 제공자·프록시
@@ -64,7 +71,13 @@ Orbit 의 기본 흐름은 호스트·외부 네트워크 없이 한 대의 PC �
 | Codex CLI — 인증 정보 | 같은 PC 에서 그 파일·저장소에 접근할 수 있는 사용자 | 접근 토큰(ChatGPT 로그인) 또는 API 키. 문서는 `~/.codex/auth.json` 을 비밀번호처럼 다루라고 경고한다 | 로그아웃할 때까지 PC 에 남는다(`ephemeral` 은 현재 프로세스 메모리에만) | `cli_auth_credentials_store`: `file` 은 `CODEX_HOME`(기본 `~/.codex`)의 `auth.json`, `keyring` 은 OS 자격 저장소, `auto` 는 OS 저장소가 되면 그쪽 아니면 `auth.json`, `ephemeral` 은 메모리 | 공식 문서 [Authentication](https://learn.chatgpt.com/docs/auth) (2026-10-01 확인) |
 | Codex CLI — 로컬 세션 기록 | 같은 PC 에서 그 파일에 접근할 수 있는 사용자 | 세션 기록(transcript) | 기본으로 `CODEX_HOME` 아래에 저장(예: `~/.codex/history.jsonl`). `[history] persistence = "none"` 으로 끄고 `history.max_bytes` 로 크기 상한을 둔다. 로그는 `log_dir`(기본 `$CODEX_HOME/log`) | 기록 파일의 암호화·접근 제어 | 필드: 공식 문서 [Advanced configuration](https://learn.chatgpt.com/docs/config-file/config-advanced) (2026-10-01 확인) ; 저장: 공식 문서 [Advanced configuration](https://learn.chatgpt.com/docs/config-file/config-advanced) · [Configuration reference](https://learn.chatgpt.com/docs/config-file/config-reference) (2026-10-01 확인) ; 키: 미확인 — 공식 문서에 기록 파일 암호화 서술이 없음 |
 | Codex CLI — 로컬 세션 기록의 자동 정리 | 같은 PC 사용자 | 미확인 — 세션 파일의 형식 | 미확인 — 자동 삭제 기간 | 미확인 — 평문 여부 | 미확인 — 공식 문서에 세션 파일 형식·자동 정리·평문 여부 서술이 없음 |
-| Orbit — 실행 전 전송 대상 고지 | 같은 PC 의 사용자(로컬 웹·CLI) | 에이전트 CLI 가 코드·프롬프트를 보낼 곳(외부 모델 제공자·조직 프록시)과 허용 여부 진단 결과 | 진단 결과를 PC 의 기록에 남긴다 | Orbit 이 모델 API 키를 받거나 보관할지는 아직 정하지 않았다. 지금 설계는 각 CLI 의 자체 자격 저장소를 그대로 쓰는 것이다 | 미확인 — 구현 전 설계 의도 |
+| Orbit — 실행 전 전송 대상 고지 | 같은 PC 의 사용자(로컬 웹·CLI) | 에이전트 CLI 가 코드·프롬프트를 보낼 곳(외부 모델 제공자·조직 프록시)과 허용 여부 진단 결과 | 진단 결과를 PC 의 기록에 남긴다 | Orbit 은 모델 API 키를 보관하지 않는다. 에이전트 CLI 는 각자의 자체 자격 저장소를 그대로 쓴다. 키가 필요한 두뇌(자체 두뇌 등)에는 정해진 모델 키 이름 목록(`MODEL_KEY_NAMES`)에 있고 사용자가 두뇌 설정에서 이름을 허락한 환경 변수의 값만, 데몬을 띄운 사용자 셸 환경에서 읽어 넘긴다 | 미확인 — 구현 전 설계 의도 |
+| Orbit 자체 두뇌(orbit) — 보내는 것(v0.6) | 사람이 두뇌 프로필에 적은 API 주소의 운영자(Anthropic Messages API 또는 OpenAI 호환 API — 조직 프록시를 적었으면 그 운영자) | 시스템 지시·프롬프트·맥락(프로젝트 기억 포함)·두뇌가 도구로 읽은 작업공간 파일 내용과 명령 결과. 주소는 https 가 기본이다. 이 PC 안(루프백) 주소는 http 도 되고, 이 PC 밖 http 주소는 평문 http 허용(`allowPlainHttp`)을 명시했을 때만 부른다(그때 키와 내용이 암호화 없이 간다 — 명시가 없으면 부르지 않는다) | Orbit 쪽 기록은 ①절 두뇌 실행 기록. 받는 쪽 보관은 아래 행(제공자별)을 따른다 | 이 PC 환경변수 하나 — 정해진 모델 키 이름 목록에 있고 프로필의 허용 목록에 이름이 있을 때만 읽는다. 키는 요청 머리로만 보내고 DB·로그·이벤트·오류에 남기지 않는다 | 실측 (2026-10-14) |
+| Orbit 자체 두뇌 — Anthropic API 보관·학습 | Anthropic | Messages API 로 보낸 입력과 받은 출력 | 받거나 만든 날로부터 30일 안에 지운다. 예외는 더 긴 보관 서비스·별도 합의·이용 정책 위반 처리(위반으로 분류되면 최대 2년)·법적 요구. 상업 제품(API 포함)의 입력·출력은 기본으로 모델 학습에 쓰지 않는다 | Anthropic 에서 만든 API 키를 이 PC 환경변수로 둔다 | 필드: 공식 문서 [How long do you store my organization's data?](https://privacy.claude.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data) (2026-10-14 확인) ; 저장: 공식 문서 [How long do you store my organization's data?](https://privacy.claude.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data) · [Is my data used for model training?](https://privacy.claude.com/en/articles/7996868-is-my-data-used-for-model-training) (2026-10-14 확인) ; 키: 실측 (2026-10-14) |
+| Orbit 자체 두뇌 — OpenAI API 보관·학습 | OpenAI | chat completions 로 보낸 입력과 받은 출력. 남용 감시 로그에 프롬프트·응답이 들어갈 수 있다 | 남용 감시 로그는 기본으로 최대 30일 남는다(법적 요구 등이면 더 길 수 있다). 2023-03-01 부터 API 로 보낸 데이터는 명시적으로 공유를 고르지 않으면 모델 학습에 쓰지 않는다 | OpenAI 에서 만든 API 키를 이 PC 환경변수로 둔다 | 필드: 공식 문서 [Data controls in the OpenAI platform](https://developers.openai.com/api/docs/guides/your-data) (2026-10-14 확인) ; 저장: 공식 문서 [Data controls in the OpenAI platform](https://developers.openai.com/api/docs/guides/your-data) (2026-10-14 확인) ; 키: 실측 (2026-10-14) |
+| Orbit 자체 두뇌 — 그 밖의 호환 주소 | 그 주소의 운영자(자체 호스팅 서버·라우터·조직 프록시) | 위 '보내는 것' 행과 같다 | 운영자가 정한다 | 운영자가 정한 키를 이 PC 환경변수로 둔다 | 필드: 실측 (2026-10-14) ; 저장: 미확인 — 받는 서버를 사람이 정하므로 운영자마다 다르다 ; 키: 실측 (2026-10-14) |
+| hermes 두뇌 — 모델 요청 | hermes 설정에서 고른 모델 제공자(클라우드 API·자체 호스팅 주소. Nous Portal 을 고르면 Nous 와 그 뒤의 제공자) | Orbit 이 넘긴 프롬프트와 hermes 가 작업공간에서 읽은 내용 — 요청 본문 구성은 미확인 | 제공자마다 다르다 | hermes 설정 폴더(`HERMES_HOME`, POSIX 기본 `~/.hermes`)의 `.env`(API 키)·`auth.json`(OAuth 자격 증명) | 필드: 미확인 — hermes 문서가 요청 본문에 무엇이 실리는지 적지 않는다 ; 저장: 미확인 — Nous Portal 의 보관·학습 정책을 문서에서 찾지 못했다 ; 키: 공식 문서 [Hermes Agent Configuration](https://hermes-agent.nousresearch.com/docs/user-guide/configuration) · [Environment Variables](https://hermes-agent.nousresearch.com/docs/reference/environment-variables) (2026-10-14 확인) |
+| hermes 두뇌 — 로컬 세션 기록 | 같은 PC 에서 그 파일에 접근할 수 있는 사용자 | 세션 정보와 모든 메시지 기록(도구 호출·결과 포함) | `HERMES_HOME` 의 SQLite 파일 `state.db`. 끝난 세션은 기본으로 90일 쓰지 않으면 지운다(설정으로 끌 수 있다) | 미확인 — 평문 여부 | 필드: 공식 문서 [Sessions](https://hermes-agent.nousresearch.com/docs/user-guide/sessions) (2026-10-14 확인) ; 저장: 공식 문서 [Sessions](https://hermes-agent.nousresearch.com/docs/user-guide/sessions) (2026-10-14 확인) ; 키: 미확인 — 세션 파일의 암호화 여부를 문서가 적지 않는다 |
 
 <!-- sec:host -->
 ## ③ GitHub·GitLab 투영
@@ -83,6 +96,9 @@ Orbit 의 기본 흐름은 호스트·외부 네트워크 없이 한 대의 PC �
 | GitLab — notes(이슈·MR 코멘트) | 프로젝트 공개 수준을 따른다. 내부 노트(`internal`)는 Reporter 이상 구성원만 | `body`·`author`(username·name·email 등)·`system`·`internal`·시각 | 호스트가 보관한다. `PUT` 으로 고치고 `DELETE` 로 지우는 엔드포인트가 있다. 자기 코멘트는 언제든 고칠 수 있고 Maintainer·Owner 는 남의 코멘트도 고친다 | 호스트 토큰. Orbit 쪽 보관 위치는 구현 전 | 필드: 공식 문서 [Notes API](https://docs.gitlab.com/api/notes/) · [Comments and threads](https://docs.gitlab.com/user/discussions/) (2026-10-01 확인) ; 저장: 공식 문서 [Notes API](https://docs.gitlab.com/api/notes/) · [Comments and threads](https://docs.gitlab.com/user/discussions/) (2026-10-01 확인) ; 키: 미확인 — 구현 전 설계 의도 |
 | GitLab — 코멘트·설명 편집 이력과 삭제 권한 | 미확인 — 편집 이력을 누가 보는지 | 미확인 — 코멘트 편집 표시·이력, commit status 를 지울 수 있는지(만들기·고치기 권한은 위 commit status 행에 적었다) | 미확인 — 이력 보관과 삭제 권한 | 해당 없음 | 미확인 — 공식 문서(API·discussions·permissions)에서 해당 문장을 찾지 못함 |
 | GitLab — 구버전(v4 이전 API) 차이 | 미확인 — 구버전 인스턴스의 접근 규칙 | 미확인 — 현행 v4 의 필드와 다른 점 | 미확인 — 확인하지 않음 | 미확인 — 확인하지 않음 | 미확인 — 구버전 공식 문서를 열어 대조하지 못함 |
+| GitHub — 이슈 가져오기·댓글(Orbit 트래커, v0.6) | 댓글은 저장소 읽기 권한자(공개 저장소면 누구나) | 가져오기: 이슈 번호·제목·본문·열림/닫힘을 읽어 일감 사본으로 둔다(Orbit 에서는 읽기만, 본문은 자료로만 보이고 실행하지 않는다). 올리기: 사람이 누른 댓글 한 건만. Orbit 상태를 이슈로 자동으로 올리지 않는다 | 사본은 ①절 제어면 DB, 댓글은 호스트가 보관한다(편집·삭제 이력 규칙은 위 GitHub 행) | `gh` 자체 인증을 그대로 쓴다. Orbit 은 GitHub 토큰을 받거나 남기지 않고, gh 자식 프로세스에 토큰 환경변수를 넘기지 않는다 | 실측 (2026-10-14) |
+| GitHub CLI(gh) — 인증 정보 | 같은 PC 에서 그 저장소·파일에 접근할 수 있는 사용자 | 인증 토큰 | 기본은 시스템 자격 증명 저장소. 저장소가 없거나 쓰다 문제가 생기면 평문 파일로 대신 쓴다(`--insecure-storage` 면 처음부터 평문) | 시스템 자격 증명 저장소, 또는 대신 쓴 평문 파일(위치는 `gh auth status` 로 본다) | 공식 문서 [gh auth login](https://cli.github.com/manual/gh_auth_login) (2026-10-14 확인) |
+| GitLab — 이슈 가져오기·노트(Orbit 트래커, v0.6) | 노트는 프로젝트 공개 수준을 따른다(위 GitLab notes 행) | 가져오기: 이슈 번호·제목·설명·열림/닫힘을 읽어 일감 사본으로 둔다(읽기만, 실행하지 않는다). 올리기: 사람이 누른 노트 한 건만. 기준 주소는 https 가 기본이고, 이 PC 밖 http 주소(폐쇄망 등)는 평문 http 허용(`allowPlainHttp`)을 명시했을 때만 쓴다(그때 토큰과 내용이 암호화 없이 간다) | 사본은 ①절 제어면 DB, 노트는 호스트가 보관한다 | 개인 접근 토큰 값은 이 PC 환경변수에서 읽어 `PRIVATE-TOKEN` 머리로만 보낸다. Orbit 은 환경변수 이름만 남기고(이름을 정하거나 바꾸는 것은 전체 owner 만), 다른 주소로 넘기는 응답(3xx)은 따라가지 않는다 | 실측 (2026-10-14) |
 | 공통(GitHub·GitLab) — 결정 카드 코멘트 | 호스트 저장소 읽기 권한자(공개 저장소면 누구나) | 기본 = 없음(호스트로 아무것도 안 나감). 선택 = 숨김/제목/요약 3단계(프로젝트별, 실제 카드 예시를 보고 고름) | 호스트가 보관(코멘트 편집·삭제 이력 규칙은 위 GitHub·GitLab 행을 따른다) | 호스트 토큰. Orbit 쪽 보관 위치는 구현 전 | 미확인 — 구현 전 설계 의도 |
 | 공통 — 공개 실험 repo | 인터넷의 누구나 | 비밀이 없는 실험 자료만(재현 스크립트·결과 표·이 경계표) | 호스트가 보관한다. 공개 저장소를 비공개로 바꿔도 이미 만들어진 포크는 공개로 남는다 | 읽기에는 키가 필요 없다. 쓰기는 소유자 계정 권한 | 필드: 미확인 — 운영 약속이라 문서로 확인할 대상이 아님 ; 저장: 공식 문서 [Setting repository visibility](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/managing-repository-settings/setting-repository-visibility) (2026-10-01 확인) ; 키: 공식 문서 [About repositories](https://docs.github.com/en/repositories/creating-and-managing-repositories/about-repositories) (2026-10-01 확인) |
 
@@ -96,13 +112,30 @@ Orbit 의 기본 흐름은 호스트·외부 네트워크 없이 한 대의 PC �
 | Codex CLI — 사용자 지정 CA | 같은 PC 사용자 | 같은 사용자 지정 CA 설정이 로그인·일반 HTTPS 요청·보안 WebSocket 에 모두 적용된다 | 인증서는 사용자가 정한 PEM 파일에 있다 | `CODEX_CA_CERTIFICATE`, 없으면 `SSL_CERT_FILE` | 공식 문서 [Authentication](https://learn.chatgpt.com/docs/auth) (2026-10-01 확인) |
 | Orbit doctor — TLS 재서명 감지 | 같은 PC 의 사용자(로컬 웹·CLI) | 모델 제공자 등 연결 대상의 인증서가 조직 인증서로 재서명됐는지 표시한다. 인증서 고정(pinning)은 하지 않는다 | 진단 결과를 PC 의 기록에 남긴다 | 키 없음 — 인증서를 읽어 비교만 한다 | 미확인 — 구현 전 설계 의도 |
 
+<!-- sec:outbound -->
+## ⑤ 알림 창구·원격 실행 장소
+
+알림 창구는 기본으로 꺼져 있고 이 PC 전체 owner 가 켠다. 바깥으로는 데몬만 보내고, 비밀은 값이 아니라 환경변수 이름만 남긴다. 메신저로 받는 답은 "보류" 하나뿐이다. 원격 실행 장소는 선택이며, 사람 없는 자동 실행은 격리 장소(docker)에서만 연다 — 예외는 전체 owner 가 적용한 "무인 로컬 실행 허용" 카드뿐이다(이 PC 에서 돌고 격리가 아니다).
+
+| 무엇 | 누가 보나 | 보이는 필드 | 저장 여부·기간 | 키 위치 | 근거 |
+|---|---|---|---|---|---|
+| Telegram 창구 — Orbit 이 보내고 받는 것(v0.6) | 그 채팅의 참여자와 Telegram(아래 행) | 알림 제목·본문(알려진 비밀 값을 가린 뒤, 4096자 상한)·심각도·Orbit 화면 주소 조각. 승인 카드 알림은 카드 제목과 고정 안내문만 나가고 카드 본문은 나가지 않는다. 받는 것은 허용 목록에 넣은 사용자의 "보류" 버튼 하나뿐이다(신원 미확인 접수 — 승인·거절과 적용은 로컬 웹에서만). Bot API 주소는 https 가 기본이고, 이 PC 밖 http 주소는 평문 http 허용(`allowPlainHttp`)을 명시했을 때만 보낸다(그때 토큰과 내용이 암호화 없이 간다 — 명시가 없으면 보내지 않고 이유를 남긴다) | Orbit 쪽은 ①절 알림 기록에 배송 결과, 버튼 답은 ①절 승인 카드에 접수 기록으로 남는다 | 봇 토큰은 이 PC 환경변수에서만 읽고 Orbit 은 이름만 남긴다. 버튼마다 한 번 쓰는 토큰이 자기 카드만 가리킨다 | 실측 (2026-10-14) |
+| Telegram — 서버 보관·봇 토큰 | Telegram | 봇에게 보내거나 봇이 보낸 클라우드 채팅 메시지. 봇 통신은 Bot API 중간 서버를 거친다(종단간 암호화는 비밀 대화에만 있다) | 클라우드 채팅 메시지는 Telegram 서버(여러 데이터 센터)에 저장된다. 봇이 받을 업데이트는 가져갈 때까지 서버에 쌓이되 24시간 넘게 두지 않는다 | 봇 토큰은 BotFather 가 발급하고, 가진 사람은 봇을 완전히 제어한다. 토큰은 Bot API 요청 주소에 들어간다 | 필드: 공식 문서 [Bots: An introduction for developers](https://core.telegram.org/bots) · [Telegram FAQ](https://telegram.org/faq) (2026-10-14 확인) ; 저장: 공식 문서 [Telegram Privacy Policy](https://telegram.org/privacy) · [Telegram Bot API](https://core.telegram.org/bots/api) (2026-10-14 확인) ; 키: 공식 문서 [Bots: An introduction for developers](https://core.telegram.org/bots) · [Telegram Bot API](https://core.telegram.org/bots/api) (2026-10-14 확인) |
+| Slack 창구 — Orbit 이 보내는 것(v0.6) | 그 webhook 이 묶인 채널을 볼 수 있는 사람과 Slack(아래 행) | 알림 제목·본문(알려진 비밀 값을 가린 뒤 — 전체 호출·사람 호출·숨은 링크로 읽히지 않게 꺾쇠·앰퍼샌드를 바꾼다)·심각도. 승인 카드 알림은 카드 제목과 고정 안내문만 나가고 카드 본문은 나가지 않는다. 답은 받지 않는다. 이 PC 밖 http 주소는 평문 http 허용(`allowPlainHttp`)을 명시했을 때만 보낸다(그때 암호화 없이 간다 — 명시가 없으면 보내지 않고 이유를 남긴다) | Orbit 쪽은 ①절 알림 기록에 배송 결과만 | webhook 주소 자체가 비밀이라 이 PC 환경변수에서만 읽고 Orbit 은 이름만 남긴다 | 실측 (2026-10-14) |
+| Slack — 채널 메시지 보관·webhook 주소 | 공개 채널은 워크스페이스 구성원(게스트 제외), 비공개 채널은 그 채널 구성원 | webhook 으로 올린 메시지(webhook 은 사용자 한 명·채널 하나에 묶인다) | 워크스페이스의 보관 설정이 모든 메시지에 적용된다 — 유료 플랜 기본은 워크스페이스가 있는 동안, 무료 플랜은 90일 또는 1년 | webhook 주소에 비밀이 들어 있다. 유출된 주소는 Slack 이 찾아 폐기한다 | 필드: 공식 문서 [Sending messages using incoming webhooks](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks) · [What is a channel?](https://slack.com/help/articles/360017938993-What-is-a-channel) (2026-10-14 확인) ; 저장: 공식 문서 [Customize data retention in Slack](https://slack.com/help/articles/203457187-Customize-message-and-file-retention-policies) (2026-10-14 확인) ; 키: 공식 문서 [Sending messages using incoming webhooks](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks) (2026-10-14 확인) |
+| 일반 webhook 창구 — Orbit 이 보내는 것(v0.6) | 사람이 적은 주소의 운영자 | 알림 JSON(번호·종류·심각도·제목·본문·화면 주소 조각·시각, 알려진 비밀 값을 가린 뒤). 승인 카드 알림은 카드 제목과 고정 안내문만 나가고 카드 본문은 나가지 않는다. 답은 받지 않는다. 이 PC 밖 http 주소는 평문 http 허용(`allowPlainHttp`)을 명시했을 때만 보낸다(그때 암호화 없이 간다 — 명시가 없으면 보내지 않고 이유를 남긴다) | 받는 쪽 보관은 그 운영자가 정한다. Orbit 쪽은 ①절 알림 기록에 배송 결과만 | 선택 서명 비밀(본문 HMAC-SHA256 을 `X-Orbit-Signature` 머리로)은 이 PC 환경변수에서만 읽는다. 주소의 경로·쿼리는 전체 owner 만 화면에서 본다(경로가 자격 증명인 수신기가 많다) | 필드: 실측 (2026-10-14) ; 저장: 미확인 — 받는 서버를 사람이 정하므로 운영자마다 다르다 ; 키: 실측 (2026-10-14) |
+| ssh 실행 장소 — 원격 두뇌 실행(v0.6) | 원격 호스트의 운영자와 그 계정에 접근할 수 있는 사람 | 두뇌에게 주는 프롬프트·맥락, 원격 저장소에 이미 있는 base 커밋에서 만든 run 전용 작업 폴더의 코드, 두뇌 출력, 바뀐 내용(diff). 원격의 두뇌가 모델 제공자로 보내는 것은 ②절을 따른다. 격리로 치지 않아 사람 없는 자동 실행을 열지 않는다. 원격 두뇌가 이 PC 쪽으로 거꾸로 닿지 않게 에이전트 전달·X11 전달·포트 전달을 늘 끈다(사용자 ssh 설정과 상관없이) | run 전용 원격 작업 폴더는 끝나면(실패해도) 지운다. 원격 저장소와 원격 두뇌 자체의 기록은 원격에 남는다 | ssh 개인 키는 이 PC 의 ssh 가 스스로 찾고, Orbit 은 키를 읽거나 넘기지 않는다. Orbit 은 ssh 를 `BatchMode=yes` 로 띄운다(아래 OpenSSH 행) | 실측 (2026-10-14) |
+| OpenSSH — 개인 키·배치 모드 | 같은 PC 에서 그 파일에 접근할 수 있는 사용자 | 개인 키. `BatchMode` 를 `yes` 로 두면 비밀번호 입력·호스트 키 확인 같은 사용자 상호작용을 끈다 | 기본 개인 키는 `~/.ssh/` 아래 파일(`id_ed25519` 등)이다 | 같은 PC 의 개인 키 파일 | 공식 문서 [ssh_config(5)](https://man.openbsd.org/ssh_config) (2026-10-14 확인) |
+| docker 실행 장소 — 컨테이너 검사·두뇌 실행(v0.6) | 이 PC 의 docker 엔진과 그것을 쓸 수 있는 사용자 | Orbit 이 만든 작업 폴더(임시 책상·후보 worktree)를 컨테이너에 붙인다. `.git` 은 읽기 전용으로 다시 붙이고, 본 저장소의 `.git` 폴더는 넘기지 않는다. 검사의 네트워크는 늘 `none` 이라 바깥으로 보내지 못한다. 두뇌의 네트워크는 실행 장소 설정(`brainNetwork`)이 정하고 기본은 `none` 이다 — `bridge` 를 고르면 컨테이너 안 두뇌가 모델 제공자로 보낼 수 있고, 그때 두뇌에게 허락한 모델 키만 컨테이너에 들어간다(`-e 이름` — 값은 명령줄에 쓰지 않고 docker CLI 자신의 환경에서 옮긴다). docker 엔진은 늘 이름으로 못 박아(`--context`, 없으면 이 PC 의 기본 엔진) 사용자가 골라 둔 원격 엔진으로 새지 않는다. 토큰류 환경변수를 컨테이너에 넘기지 않는다 | 컨테이너는 이름을 붙여 띄우고 끝나면 지운다. 끝난 뒤 `.git` 이 바뀌었으면 그 결과를 믿지 않는다. 격리로 치는 실행 장소는 docker 하나뿐이다 | 키 없음 | 실측 (2026-10-14) |
+| Docker — 지우기·네트워크 없음·읽기 전용 붙이기 | 같은 PC 사용자 | `--rm` 은 끝난 컨테이너와 이름 없는 볼륨을 지운다. `--network none` 이면 컨테이너 안에는 루프백 장치만 있다. 붙인 폴더는 기본으로 쓰기 가능이고 `:ro` 를 붙이면 읽기 전용이다 | 끝난 컨테이너는 `--rm` 으로 지워진다 | 해당 없음 | 공식 문서 [docker container run](https://docs.docker.com/reference/cli/docker/container/run/) · [None network driver](https://docs.docker.com/engine/network/drivers/none/) · [Bind mounts](https://docs.docker.com/engine/storage/bind-mounts/) (2026-10-14 확인) |
+| Docker — 이미지 받기(레지스트리) | 이미지를 받아 오는 레지스트리의 운영자 | 미확인 — pull 요청에서 레지스트리가 무엇을 기록하는지 | 미확인 — 레지스트리 쪽 보관 기간 | 미확인 — 레지스트리 로그인 정보의 보관 위치 | 미확인 — 레지스트리가 pull 요청에서 무엇을 남기는지 공식 문서에서 찾지 못했다 |
+
 <!-- sec:not-yet -->
 ## 아직 없는 주체
 
 - 중계 서버 — 아직 없음 — 만들기 전 이 표를 먼저 갱신
-- Telegram — 아직 없음 — 만들기 전 이 표를 먼저 갱신
 
-메신저에 무엇이 보일지(노출 수준)는 Telegram 을 만들 때 위 줄을 표로 바꾸며 정한다.
+메신저(Telegram·Slack·일반 webhook)에 무엇이 보이는지는 ⑤절 표에 적었다.
 
 약속: Orbit 서버는 공용 GitHub App 키를 갖지 않는다.
 
@@ -134,4 +167,4 @@ Orbit 의 기본 흐름은 호스트·외부 네트워크 없이 한 대의 PC �
 2. 고친 표는 새 태그(`data-boundary-v2`, `data-boundary-v3` …)와 새 sha256 으로 다시 고정한다. 이미 만든 태그는 옮기지 않는다.
 3. 확인일이 오래된 칸은 대상 버전을 올리면서 다시 확인하고, 확인하지 못하면 `미확인` 으로 되돌린다.
 4. 가칭 Orbit 의 이름이 바뀌면, 이름만 바꾼 판도 새 태그로 다시 고정한다.
-5. 아직 없는 주체(중계 서버·Telegram)를 만들기 전에 그 주체의 행을 이 표에 먼저 넣고 새 태그로 고정한다.
+5. 아직 없는 주체(중계 서버 등)를 만들기 전에 그 주체의 행을 이 표에 먼저 넣고 새 태그로 고정한다.
